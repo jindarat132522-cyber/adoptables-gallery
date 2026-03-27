@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ adoptable.name }} – {{ owner.username }}'s Adoptables</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#faf7f2;--ink:#1a1410;--ink2:#4a3f35;--ink3:#8a7a6e;--blush:#e8c9b8;--rose:#c97d60;--rose-dark:#a85f42;--card:#ffffff;--border:#e0d8cf;--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+a{color:var(--rose);text-decoration:none;}
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1.5rem;height:60px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--ink);}
+.nav-logo span{color:var(--rose);}
+.nav-badge{font-size:0.78rem;background:var(--blush);color:var(--rose-dark);padding:3px 10px;border-radius:20px;}
+.main{max-width:960px;margin:0 auto;padding:2rem 1.5rem;}
+.back-link{display:inline-block;font-size:0.875rem;color:var(--ink3);margin-bottom:1.5rem;}
+.back-link:hover{color:var(--rose);}
+.detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+.gallery-main{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--border);}
+.gallery-main img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+.gallery-thumbs{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;}
+.gallery-thumb{width:64px;height:64px;border-radius:6px;overflow:hidden;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.gallery-thumb.active{border-color:var(--rose);}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.detail-info{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;}
+.detail-name{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;margin-bottom:0.5rem;}
+.detail-price{font-size:1.2rem;color:var(--rose);font-weight:500;margin-bottom:1rem;}
+.detail-meta{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.5rem;}
+.meta-row{display:flex;gap:0.75rem;font-size:0.875rem;}
+.meta-key{color:var(--ink3);width:90px;flex-shrink:0;}
+.detail-desc{font-size:0.9rem;line-height:1.7;color:var(--ink2);margin-bottom:1.5rem;}
+.tag{display:inline-block;background:var(--blush);color:var(--rose-dark);font-size:0.75rem;padding:3px 10px;border-radius:20px;margin:2px;}
+.tags-wrap{margin-bottom:1rem;}
+.status-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.75rem;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;}
+.status-open{background:#e8f5e9;color:#2e7d32;}.status-pending{background:#fff8e1;color:#f57f17;}
+.status-sold{background:#fdecea;color:#c62828;}.status-nfs{background:#e3f2fd;color:#1565c0;}
+.status-ota{background:#f3e5f5;color:#7b1fa2;}.status-tent{background:#fff3e0;color:#e65100;}
+.status-custom{background:#f5f5f5;color:#555;}
+.footer{text-align:center;padding:2rem;font-size:0.8rem;color:var(--ink3);border-top:1px solid var(--border);margin-top:3rem;}
+@media(max-width:640px){.detail-layout{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">adopt<span>.</span>vault</span>
+  <span class="nav-badge">View only</span>
+</nav>
+<main class="main">
+  <a href="{{ url_for('public_gallery', username=owner.username) }}" class="back-link">← Back to {{ owner.username }}'s gallery</a>
+
+  <div class="detail-layout">
+    <div>
+      <div class="gallery-main">
+        {% set cimg = cover_image(adoptable) %}
+        {% if cimg %}
+        <img id="main-img" src="{{ url_for('static', filename='uploads/' + cimg.wm_filename) }}" alt="{{ adoptable.name }}">
+        {% else %}
+        <div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:3rem;color:var(--ink3);">🐾</div>
+        {% endif %}
+      </div>
+      {% if adoptable.images|length > 1 %}
+      <div class="gallery-thumbs">
+        {% for img in adoptable.images %}
+        <div class="gallery-thumb {% if img.is_cover %}active{% endif %}" onclick="switchImg(this, '{{ url_for('static', filename='uploads/' + img.wm_filename) }}')">
+          <img src="{{ url_for('static', filename='uploads/' + img.wm_filename) }}" alt="">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="detail-info">
+      <div class="detail-name">{{ adoptable.name }}</div>
+      {% if adoptable.price %}
+      <div class="detail-price">{{ adoptable.currency }} {{ adoptable.price }}</div>
+      {% else %}
+      <div class="detail-price" style="color:var(--ink3)">Price not listed</div>
+      {% endif %}
+
+      <div class="detail-meta">
+        <div class="meta-row">
+          <span class="meta-key">Status</span>
+          <span class="status-badge {{ 'status-' + adoptable.status if adoptable.status in ['open','pending','sold','nfs','ota','tent'] else 'status-custom' }}">{{ adoptable.status }}</span>
+        </div>
+        {% if adoptable.species %}
+        <div class="meta-row"><span class="meta-key">Species</span><span>{{ adoptable.species }}</span></div>
+        {% endif %}
+        {% if adoptable.gender %}
+        <div class="meta-row"><span class="meta-key">Gender</span><span>{{ adoptable.gender }}</span></div>
+        {% endif %}
+        {% if adoptable.category %}
+        <div class="meta-row"><span class="meta-key">Category</span><span>{{ adoptable.category.name }}</span></div>
+        {% endif %}
+        <div class="meta-row"><span class="meta-key">By</span><span>{{ owner.username }}</span></div>
+      </div>
+
+      {% if adoptable.description %}
+      <div class="detail-desc">{{ adoptable.description }}</div>
+      {% endif %}
+
+      {% if adoptable.tags %}
+      <div class="tags-wrap">
+        {% for tag in adoptable.tags.split(',') %}
+          {% if tag.strip() %}<span class="tag">{{ tag.strip() }}</span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+<div class="footer">Powered by adopt.vault</div>
+<script>
+function switchImg(thumb, src) {
+  document.getElementById('main-img').src = src;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+</script>
+</body>
+</html>

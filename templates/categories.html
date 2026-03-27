@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Categories – adopt.vault{% endblock %}
+{% block content %}
+<style>
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; margin-top: 1.5rem; }
+.cat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.cat-cover { width: 100%; height: 160px; object-fit: cover; display: block; background: var(--border); }
+.cat-cover-placeholder { height: 160px; background: linear-gradient(135deg, var(--blush), var(--cream)); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--rose); }
+.cat-body { padding: 1rem 1.25rem; }
+.cat-name { font-weight: 500; font-size: 1rem; color: var(--ink); margin-bottom: 4px; }
+.cat-count { font-size: 0.8rem; color: var(--ink3); margin-bottom: 0.75rem; }
+.cat-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.new-cat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; max-width: 520px; }
+.new-cat-title { font-weight: 500; margin-bottom: 1rem; }
+.edit-form { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.edit-form.open { display: block; }
+</style>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+  <div>
+    <h1 class="page-title">Categories</h1>
+    <div class="page-sub">Organise your adoptables into groups</div>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<div class="new-cat-box">
+  <div class="new-cat-title">New category</div>
+  <form method="POST" action="{{ url_for('new_category') }}" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>Category name *</label>
+      <input type="text" name="name" required placeholder="e.g. Dragons, Closed Species…">
+    </div>
+    <div class="form-group">
+      <label>Cover image (optional)</label>
+      <input type="file" name="cover" accept="image/*">
+      <div class="form-hint">Displayed as a banner on the category card.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create category</button>
+  </form>
+</div>
+
+{% if categories %}
+<div class="cat-grid">
+{% for cat in categories %}
+  <div class="cat-card">
+    {% if cat.cover_filename %}
+    <img class="cat-cover" src="{{ url_for('static', filename='uploads/' + cat.cover_filename) }}" alt="{{ cat.name }}">
+    {% else %}
+    <div class="cat-cover-placeholder">🗂️</div>
+    {% endif %}
+    <div class="cat-body">
+      <div class="cat-name">{{ cat.name }}</div>
+      <div class="cat-count">{{ cat.adoptables|length }} adoptable{{ 's' if cat.adoptables|length != 1 }}</div>
+      <div class="cat-actions">
+        <button class="btn btn-outline btn-sm" onclick="toggleEdit({{ cat.id }})">Edit</button>
+        <form method="POST" action="{{ url_for('delete_category', cid=cat.id) }}"
+              onsubmit="return confirm('Delete category {{ cat.name }}? Adoptables will become uncategorised.')">
+          <button type="submit" class="btn btn-sm" style="color:#e05555;border:1px solid #e05555;background:transparent;">Delete</button>
+        </form>
+      </div>
+      <div class="edit-form" id="edit-{{ cat.id }}">
+        <form method="POST" action="{{ url_for('edit_category', cid=cat.id) }}" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>Rename</label>
+            <input type="text" name="name" value="{{ cat.name }}">
+          </div>
+          <div class="form-group">
+            <label>Replace cover image</label>
+            <input type="file" name="cover" accept="image/*">
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% else %}
+<div style="color:var(--ink3);font-size:0.9rem;margin-top:1.5rem;">No categories yet. Create one above!</div>
+{% endif %}
+
+<script>
+function toggleEdit(id) {
+  const el = document.getElementById('edit-' + id);
+  el.classList.toggle('open');
+}
+</script>
+{% endblock %}

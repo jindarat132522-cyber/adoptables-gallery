@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}{{ adoptable.name }} – adopt.vault{% endblock %}
+{% block content %}
+<style>
+.detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 960px; margin: 0 auto; }
+.gallery-main { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--border); }
+.gallery-main img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.gallery-thumbs { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.gallery-thumb { width: 64px; height: 64px; border-radius: 6px; overflow: hidden; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; }
+.gallery-thumb.active { border-color: var(--rose); }
+.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detail-info { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; }
+.detail-name { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600; margin-bottom: 0.5rem; }
+.detail-price { font-size: 1.2rem; color: var(--rose); font-weight: 500; margin-bottom: 1rem; }
+.detail-meta { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+.meta-row { display: flex; gap: 0.75rem; font-size: 0.875rem; }
+.meta-key { color: var(--ink3); width: 90px; flex-shrink: 0; }
+.detail-desc { font-size: 0.9rem; line-height: 1.7; color: var(--ink2); margin-bottom: 1.5rem; }
+.tag { display: inline-block; background: var(--blush); color: var(--rose-dark); font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; margin: 2px; }
+.tags-wrap { margin-bottom: 1.5rem; }
+.action-row { display: flex; gap: 0.75rem; flex-wrap: wrap; padding-top: 1rem; border-top: 1px solid var(--border); }
+.share-box { background: var(--cream); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+.share-box-label { font-size: 0.75rem; color: var(--ink3); margin-bottom: 6px; }
+.share-box-row { display: flex; gap: 0.5rem; align-items: center; }
+.share-url-text { flex: 1; font-size: 0.78rem; color: var(--ink3); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) { .detail-layout { grid-template-columns: 1fr; } }
+</style>
+
+<div style="max-width:960px;margin:0 auto 1.5rem;display:flex;gap:1rem;align-items:center;">
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">← Back</a>
+</div>
+
+<div class="detail-layout">
+  <div>
+    <div class="gallery-main">
+      {% set cimg = cover_image(adoptable) %}
+      {% if cimg %}
+      <img id="main-img" src="{{ url_for('static', filename='uploads/' + cimg.wm_filename) }}" alt="{{ adoptable.name }}">
+      {% else %}
+      <div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:3rem;color:var(--ink3);">🐾</div>
+      {% endif %}
+    </div>
+    {% if adoptable.images|length > 1 %}
+    <div class="gallery-thumbs">
+      {% for img in adoptable.images %}
+      <div class="gallery-thumb {% if img.is_cover %}active{% endif %}" onclick="switchImg(this, '{{ url_for('static', filename='uploads/' + img.wm_filename) }}')">
+        <img src="{{ url_for('static', filename='uploads/' + img.wm_filename) }}" alt="">
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="detail-info">
+    <div class="detail-name">{{ adoptable.name }}</div>
+
+    {% if adoptable.price %}
+    <div class="detail-price">{{ adoptable.currency }} {{ adoptable.price }}</div>
+    {% else %}
+    <div class="detail-price" style="color:var(--ink3)">No price set</div>
+    {% endif %}
+
+    <div class="detail-meta">
+      <div class="meta-row">
+        <span class="meta-key">Status</span>
+        <span class="status-badge {{ 'status-' + adoptable.status if adoptable.status in ['open','pending','sold','nfs','ota','tent'] else 'status-custom' }}">{{ adoptable.status }}</span>
+      </div>
+      {% if adoptable.species %}
+      <div class="meta-row"><span class="meta-key">Species</span><span>{{ adoptable.species }}</span></div>
+      {% endif %}
+      {% if adoptable.gender %}
+      <div class="meta-row"><span class="meta-key">Gender</span><span>{{ adoptable.gender }}</span></div>
+      {% endif %}
+      {% if adoptable.category %}
+      <div class="meta-row"><span class="meta-key">Category</span><span>{{ adoptable.category.name }}</span></div>
+      {% endif %}
+      <div class="meta-row"><span class="meta-key">Images</span><span>{{ adoptable.images|length }}</span></div>
+      <div class="meta-row"><span class="meta-key">Added</span><span>{{ adoptable.created_at.strftime('%b %d, %Y') }}</span></div>
+    </div>
+
+    {% if adoptable.description %}
+    <div class="detail-desc">{{ adoptable.description }}</div>
+    {% endif %}
+
+    {% if adoptable.tags %}
+    <div class="tags-wrap">
+      {% for tag in adoptable.tags.split(',') %}
+        {% if tag.strip() %}<span class="tag">{{ tag.strip() }}</span>{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="share-box">
+      <div class="share-box-label">Share this adoptable</div>
+      <div class="share-box-row">
+        <span class="share-url-text">{{ gallery_url }}</span>
+        <button class="btn btn-share btn-sm" onclick="copyToClipboard('{{ gallery_url }}', this)">Copy</button>
+        <a href="{{ gallery_url }}" target="_blank" class="btn btn-outline btn-sm">View</a>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a href="{{ url_for('edit_adoptable', aid=adoptable.id) }}" class="btn btn-outline">Edit</a>
+      <form method="POST" action="{{ url_for('delete_adoptable', aid=adoptable.id) }}"
+            onsubmit="return confirm('Delete this adoptable? This cannot be undone.')">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchImg(thumb, src) {
+  document.getElementById('main-img').src = src;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Register – adopt.gallery{% endblock %}
+{% block content %}
+<style>
+.auth-wrap{min-height:calc(100vh - 80px);display:flex;align-items:center;justify-content:center;margin-top:-2rem;}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:400px;box-shadow:var(--shadow);}
+.auth-logo{font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;text-align:center;margin-bottom:0.25rem;color:var(--ink);}
+.auth-logo span{color:var(--rose);}
+.auth-tagline{text-align:center;color:var(--ink3);font-size:0.85rem;margin-bottom:2rem;}
+.auth-footer{text-align:center;font-size:0.85rem;color:var(--ink3);margin-top:1.5rem;}
+.auth-footer a{color:var(--rose);}
+</style>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">adopt<span>.</span>gallery</div>
+    <div class="auth-tagline">Create your account</div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" name="email" required placeholder="you@example.com" autofocus>
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" required placeholder="e.g. starwatcher">
+        <div class="form-hint">This will appear as your watermark by default.</div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="Choose a secure password" minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;">Create account</button>
+    </form>
+    <div class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}{% if adoptable %}Edit{% else %}New{% endif %} Adoptable – adopt.vault{% endblock %}
+{% block content %}
+<style>
+.form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; max-width: 800px; margin: 0 auto; }
+.form-section-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--ink); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); margin-top: 1.5rem; }
+.form-actions { display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 1rem; }
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+.img-thumb { position: relative; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); }
+.img-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.img-thumb.is-cover { border-color: var(--rose); }
+.img-thumb-actions { position: absolute; top: 4px; right: 4px; display: flex; flex-direction: column; gap: 4px; }
+.img-thumb-btn { background: rgba(255,255,255,0.92); border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.cover-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(201,125,96,0.85); color: #fff; font-size: 0.7rem; text-align: center; padding: 2px 0; }
+.status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.status-pill { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.82rem; cursor: pointer; background: var(--cream); color: var(--ink2); transition: all 0.12s; }
+.status-pill.active { background: var(--rose); color: #fff; border-color: var(--rose); }
+</style>
+
+<div style="max-width:800px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">← Back</a>
+    <h1 class="page-title">{% if adoptable %}Edit "{{ adoptable.name }}"{% else %}Add New Adoptable{% endif %}</h1>
+  </div>
+
+  <div class="form-card">
+    <form method="POST" enctype="multipart/form-data">
+
+      <div class="form-section-title" style="margin-top:0;">Basic info</div>
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" name="name" required value="{{ adoptable.name if adoptable else '' }}" placeholder="e.g. Ember the Foxy">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Species</label>
+          <input type="text" name="species" value="{{ adoptable.species if adoptable else '' }}" placeholder="e.g. Fox, Dragon…">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <input type="text" name="gender" value="{{ adoptable.gender if adoptable else '' }}" placeholder="e.g. Female, Male, N/A">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="4" placeholder="Personality, traits, backstory…">{{ adoptable.description if adoptable else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Tags</label>
+        <input type="text" name="tags" value="{{ adoptable.tags if adoptable else '' }}" placeholder="fantasy, pastel, cute (comma-separated)">
+      </div>
+
+      <div class="form-section-title">Listing details</div>
+
+      <div class="form-group">
+        <label>Status</label>
+        {% set cur_status = adoptable.status if adoptable else 'open' %}
+        {% set is_custom = cur_status not in preset_statuses %}
+        <div class="status-row" id="status-pills">
+          {% for s in preset_statuses %}
+          <span class="status-pill {% if cur_status == s %}active{% endif %}" onclick="selectStatus('{{ s }}')">{{ s.upper() }}</span>
+          {% endfor %}
+          <span class="status-pill {% if is_custom %}active{% endif %}" onclick="selectStatus('custom')">Custom…</span>
+        </div>
+        <input type="hidden" name="status" id="status-val" value="{{ cur_status if not is_custom else '' }}">
+        <input type="text" name="status_custom" id="status-custom-input"
+               placeholder="Type custom status…"
+               value="{{ cur_status if is_custom else '' }}"
+               style="display:{% if is_custom %}block{% else %}none{% endif %};margin-top:0.5rem;">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Price</label>
+          <input type="text" name="price" value="{{ adoptable.price if adoptable else '' }}" placeholder="e.g. 15.00 or OPEN">
+        </div>
+        <div class="form-group">
+          <label>Currency</label>
+          <select name="currency" id="currency-select" onchange="toggleOtherCurrency(this)">
+            {% for cur in currencies %}
+            <option value="{{ cur }}" {% if adoptable and adoptable.currency == cur %}selected{% elif not adoptable and cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="currency_other" id="currency-other"
+                 placeholder="Specify currency…"
+                 style="display:none;margin-top:0.5rem;"
+                 value="{{ adoptable.currency if adoptable and adoptable.currency not in currencies else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category_id">
+          <option value="">— None —</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if adoptable and adoptable.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-section-title">Images &amp; watermark</div>
+      <div class="form-group">
+        <label>Watermark text</label>
+        <input type="text" name="watermark_text" value="{{ adoptable.watermark_text if adoptable else '' }}" placeholder="Leave blank to use your username">
+        <div class="form-hint">Large diagonal repeating watermark applied automatically. Only watermarked versions are shown publicly.</div>
+      </div>
+
+      {% if adoptable and adoptable.images %}
+      <div class="form-group">
+        <label>Current images — check to delete, click "Set cover" for the main image</label>
+        <div class="img-grid">
+          {% for img in adoptable.images %}
+          <div class="img-thumb {% if img.is_cover %}is-cover{% endif %}">
+            <img src="{{ url_for('static', filename='uploads/' + img.wm_filename) }}" alt="">
+            {% if img.is_cover %}<div class="cover-label">Cover</div>{% endif %}
+            <div class="img-thumb-actions">
+              <button type="button" class="img-thumb-btn" onclick="setCover('{{ img.id }}')">★ Cover</button>
+              <label style="background:rgba(255,255,255,0.92);border-radius:4px;padding:2px 6px;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;gap:3px;">
+                <input type="checkbox" name="delete_image" value="{{ img.id }}" style="width:auto;padding:0;"> Del
+              </label>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="cover_image" id="cover-image-val" value="">
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label>{% if adoptable %}Add more images{% else %}Images * (select multiple){% endif %}</label>
+        <input type="file" name="images" accept="image/*" multiple {% if not adoptable %}required{% endif %} onchange="previewNew(this)">
+        <div class="form-hint">You can select multiple images at once. First image becomes the cover by default.</div>
+        <div class="img-grid" id="new-previews"></div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">{% if adoptable %}Save changes{% else %}Add adoptable{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function selectStatus(val) {
+  document.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  const customInput = document.getElementById('status-custom-input');
+  const hiddenVal   = document.getElementById('status-val');
+  if (val === 'custom') {
+    customInput.style.display = 'block';
+    hiddenVal.value = '';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    hiddenVal.value = val;
+    customInput.value = '';
+  }
+}
+
+function toggleOtherCurrency(sel) {
+  const other = document.getElementById('currency-other');
+  other.style.display = sel.value === 'Other' ? 'block' : 'none';
+}
+window.addEventListener('DOMContentLoaded', () => {
+  toggleOtherCurrency(document.getElementById('currency-select'));
+});
+
+function setCover(imgId) {
+  document.getElementById('cover-image-val').value = imgId;
+  document.querySelectorAll('.img-thumb').forEach(t => {
+    t.classList.remove('is-cover');
+    const lbl = t.querySelector('.cover-label');
+    if (lbl) lbl.remove();
+  });
+  event.target.closest('.img-thumb').classList.add('is-cover');
+  const lbl = document.createElement('div');
+  lbl.className = 'cover-label'; lbl.textContent = 'Cover';
+  event.target.closest('.img-thumb').appendChild(lbl);
+}
+
+function previewNew(input) {
+  const wrap = document.getElementById('new-previews');
+  wrap.innerHTML = '';
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const div = document.createElement('div');
+      div.className = 'img-thumb';
+      div.innerHTML = `<img src="${e.target.result}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
+      wrap.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+{% endblock %}

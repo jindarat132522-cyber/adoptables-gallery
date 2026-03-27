@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Adoptables{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #eef6ff;        /* พื้นหลังฟ้าอ่อน (เข้มขึ้นนิด) */
+  --ink: #0c1a2b;          /* ตัวหนังสือเข้มขึ้น */
+  --ink2: #2f4a66;         /* ตัวรองเข้ม */
+  --ink3: #6f8faa;         /* ตัวจาง */
+
+  --blush: #bfe2ff;        /* ฟ้าอ่อนชัดขึ้น */
+  --rose: #5aa9e6;         /* ฟ้าหลัก (เข้มขึ้น) */
+  --rose-dark: #3f8fcc;    /* ฟ้าเข้ม */
+  --sage: #9cc9ea;         /* ฟ้าเทา */
+
+  --card: #ffffff;
+  --border: #cfe0ef;       /* เส้นชัดขึ้น */
+  --shadow: 0 2px 18px rgba(0, 70, 140, 0.12);
+
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+a { color: var(--rose); text-decoration: none; }
+a:hover { color: var(--rose-dark); }
+nav {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 2rem; display: flex; align-items: center; gap: 2rem;
+  height: 60px; position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; color: var(--ink); flex-shrink: 0; }
+.nav-logo span { color: var(--rose); }
+.nav-links { display: flex; gap: 1.5rem; align-items: center; flex: 1; }
+.nav-links a { font-size: 0.875rem; color: var(--ink2); font-weight: 500; }
+.nav-links a:hover { color: var(--rose); }
+.nav-right { margin-left: auto; display: flex; gap: 1rem; align-items: center; font-size: 0.875rem; }
+.nav-user { color: var(--ink3); }
+.main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; color: var(--ink); }
+.page-sub { color: var(--ink3); font-size: 0.9rem; margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.btn-primary { background: var(--rose); color: #fff; }
+.btn-primary:hover { background: var(--rose-dark); color: #fff; }
+.btn-outline { background: transparent; color: var(--ink2); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--rose); color: var(--rose); }
+.btn-danger { background: #e05555; color: #fff; }
+.btn-danger:hover { background: #c43f3f; color: #fff; }
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+.btn-share { background: #e8f4ff; color: #1565c0; border: 1px solid #b3d4f5; }
+.btn-share:hover { background: #d0e8ff; color: #0d47a1; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.flash-msgs { padding: 0 1.5rem; max-width: 1200px; margin: 1rem auto 0; }
+.flash { padding: 10px 16px; border-radius: 8px; font-size: 0.875rem; margin-bottom: 8px; }
+.flash.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.flash.error   { background: #fdecea; color: #c62828; border: 1px solid #f5c6cb; }
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+.status-open    { background: #e8f5e9; color: #2e7d32; }
+.status-pending { background: #fff8e1; color: #f57f17; }
+.status-sold    { background: #fdecea; color: #c62828; }
+.status-nfs     { background: #e3f2fd; color: #1565c0; }
+.status-ota     { background: #f3e5f5; color: #7b1fa2; }
+.status-tent    { background: #fff3e0; color: #e65100; }
+.status-custom  { background: #f5f5f5; color: #555; }
+form input, form select, form textarea {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  background: var(--cream); color: var(--ink); outline: none; transition: border 0.15s;
+}
+form input:focus, form select:focus, form textarea:focus { border-color: var(--rose); }
+form label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--ink2); margin-bottom: 5px; }
+.form-group { margin-bottom: 1.2rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-hint { font-size: 0.78rem; color: var(--ink3); margin-top: 4px; }
+</style>
+</head>
+<body>
+{% if session.username %}
+<nav>
+  <span class="nav-logo">Adopt<span>.</span>Gallery</span>
+  <div class="nav-links">
+    <a href="{{ url_for('dashboard') }}">My Adoptables</a>
+    <a href="{{ url_for('categories') }}">Categories</a>
+    <a href="{{ url_for('new_adoptable') }}">+ Add New</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">{{ session.username }}</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Logout</a>
+  </div>
+</nav>
+{% endif %}
+<div class="flash-msgs">
+{% for cat, msg in get_flashed_messages(with_categories=True) %}
+  <div class="flash {{ cat }}">{{ msg }}</div>
+{% endfor %}
+</div>
+<main class="main">{% block content %}{% endblock %}</main>
+<script>
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+function statusBadgeClass(status) {
+  const known = ['open','pending','sold','nfs','ota','tent'];
+  return known.includes(status) ? 'status-' + status : 'status-custom';
+}
+</script>
+</body>
+</html>

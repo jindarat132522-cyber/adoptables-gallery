@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ owner.username }}'s Adoptables – adopt.vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root { --cream:#faf7f2;--ink:#1a1410;--ink2:#4a3f35;--ink3:#8a7a6e;--blush:#e8c9b8;--rose:#c97d60;--rose-dark:#a85f42;--card:#ffffff;--border:#e0d8cf;--radius:12px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+a{color:var(--rose);text-decoration:none;}
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;gap:1.5rem;height:60px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--ink);}
+.nav-logo span{color:var(--rose);}
+.nav-badge{font-size:0.78rem;background:var(--blush);color:var(--rose-dark);padding:3px 10px;border-radius:20px;}
+.main{max-width:1200px;margin:0 auto;padding:2rem 1.5rem;}
+.profile-header{text-align:center;padding:2.5rem 1rem 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--rose-dark);margin:0 auto 1rem;}
+.profile-name{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;}
+.profile-sub{color:var(--ink3);font-size:0.875rem;margin-top:4px;}
+.filter-bar{display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.75rem 1rem;}
+.filter-bar form{display:flex;gap:0.75rem;align-items:center;flex:1;flex-wrap:wrap;}
+.filter-bar select{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--cream);font-size:0.875rem;font-family:'DM Sans',sans-serif;color:var(--ink);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.25rem;}
+.adopt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;}
+.adopt-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(26,20,16,0.1);}
+.adopt-card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--border);}
+.adopt-card-body{padding:0.85rem 1rem;}
+.adopt-card-name{font-weight:500;font-size:0.95rem;color:var(--ink);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.adopt-card-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.adopt-card-price{font-size:0.85rem;color:var(--rose);font-weight:500;}
+.status-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.75rem;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;}
+.status-open{background:#e8f5e9;color:#2e7d32;}.status-pending{background:#fff8e1;color:#f57f17;}
+.status-sold{background:#fdecea;color:#c62828;}.status-nfs{background:#e3f2fd;color:#1565c0;}
+.status-ota{background:#f3e5f5;color:#7b1fa2;}.status-tent{background:#fff3e0;color:#e65100;}
+.status-custom{background:#f5f5f5;color:#555;}
+.adopt-no-img{aspect-ratio:1;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:2.5rem;}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--ink3);}
+.footer{text-align:center;padding:2rem;font-size:0.8rem;color:var(--ink3);border-top:1px solid var(--border);margin-top:3rem;}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">adopt<span>.</span>vault</span>
+  <span class="nav-badge">Public gallery — view only</span>
+</nav>
+<main class="main">
+  <div class="profile-header">
+    <div class="profile-avatar">{{ owner.username[0].upper() }}</div>
+    <div class="profile-name">{{ owner.username }}'s Adoptables</div>
+    <div class="profile-sub">{{ adoptables|length }} adoptable{{ 's' if adoptables|length != 1 }}</div>
+  </div>
+
+  <div class="filter-bar">
+    <form method="GET">
+      <select name="status" onchange="this.form.submit()">
+        <option value="all" {% if status_filter=='all' %}selected{% endif %}>All statuses</option>
+        <option value="open"    {% if status_filter=='open'    %}selected{% endif %}>Open</option>
+        <option value="ota"     {% if status_filter=='ota'     %}selected{% endif %}>OTA</option>
+        <option value="tent"    {% if status_filter=='tent'    %}selected{% endif %}>Tent</option>
+        <option value="pending" {% if status_filter=='pending' %}selected{% endif %}>Pending</option>
+        <option value="sold"    {% if status_filter=='sold'    %}selected{% endif %}>Sold</option>
+        <option value="nfs"     {% if status_filter=='nfs'     %}selected{% endif %}>NFS</option>
+      </select>
+      <select name="category" onchange="this.form.submit()">
+        <option value="all" {% if category_filter=='all' %}selected{% endif %}>All categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if category_filter==cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      {% if status_filter != 'all' or category_filter != 'all' %}
+      <a href="?" style="font-size:0.85rem;color:var(--ink3);">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if adoptables %}
+  <div class="grid">
+  {% for a in adoptables %}
+    {% set cimg = cover_image(a) %}
+    <div class="adopt-card" onclick="location.href='{{ url_for('public_adoptable', username=owner.username, aid=a.id) }}'">
+      {% if cimg %}
+      <img src="{{ url_for('static', filename='uploads/' + cimg.wm_filename) }}" alt="{{ a.name }}" loading="lazy">
+      {% else %}
+      <div class="adopt-no-img">🐾</div>
+      {% endif %}
+      <div class="adopt-card-body">
+        <div class="adopt-card-name">{{ a.name }}</div>
+        <div class="adopt-card-meta">
+          <span class="adopt-card-price">{% if a.price %}{{ a.currency }} {{ a.price }}{% else %}—{% endif %}</span>
+          <span class="status-badge {{ 'status-' + a.status if a.status in ['open','pending','sold','nfs','ota','tent'] else 'status-custom' }}">{{ a.status }}</span>
+        </div>
+        {% if a.category %}<div style="font-size:0.75rem;color:var(--ink3);margin-top:4px;">{{ a.category.name }}</div>{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No adoptables to show here yet.</p></div>
+  {% endif %}
+</main>
+<div class="footer">Powered by adopt.vault</div>
+</body>
+</html>
